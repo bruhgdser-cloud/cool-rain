@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+tput civis
+clear
+LINES=$(tput lines)
+COLUMNS=$(tput cols)
+declare -A rain
+trap 'tput cnorm; clear; exit' SIGINT SIGTERM
+for ((i=0; i<COLUMNS; i++)); do
+    if (( RANDOM % 4 == 0 )); then rain[$i]=$(( RANDOM % LINES )); else rain[$i]=-1; fi
+done
+while true; do
+    NEW_LINES=$(tput lines)
+    NEW_COLUMNS=$(tput cols)
+    if [[ $NEW_LINES -ne $LINES || $NEW_COLUMNS -ne $COLUMNS ]]; then
+        LINES=$NEW_LINES; COLUMNS=$NEW_COLUMNS; clear
+    fi
+    for ((x=0; x<COLUMNS; x++)); do
+        y=${rain[$x]}
+        if (( y >= 0 )); then
+            if (( y > 0 )); then tput cup $((y-1)) $x; echo -n " "; fi
+            if (( y < LINES )); then
+                tput cup $y $x
+                case $(( RANDOM % 3 )) in
+                    0) echo -n "." ;;
+                    1) echo -n "│" ;;
+                    2) echo -n "║" ;;
+                esac
+                rain[$x]=$((y + 1))
+            else
+                tput cup $((LINES-1)) $x; echo -n " "; rain[$x]=-1
+            fi
+        else
+            if (( RANDOM % 20 == 0 )); then rain[$x]=0; fi
+        fi
+    done
+    sleep 0.05
+done
